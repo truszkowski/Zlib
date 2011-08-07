@@ -21,9 +21,7 @@ if (COMMAND cmake_policy)
   cmake_policy (SET CMP0003 NEW)
 endif (COMMAND cmake_policy)
 
-
 project (Zlib)
-
 
 set (CMAKE_CXX_FLAGS "-ggdb3 -Wall -Wextra -Werror -O2")
 

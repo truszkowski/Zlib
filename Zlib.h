@@ -25,47 +25,46 @@
 class Zlib {
   public:
     enum Code {
-      Interupted        =  2, // Przerwano kompresje
-      Ready             =  1, // Gotowe
-      Success           =  0, // Wszystko OK
-      ZlibDataError     = -1, // Blad danych
-      ZlibBufError      = -2, // Za maly bufor na dane
-      ZlibMemError      = -3, // Za malo pamieci
-      ZlibStreamError   = -4, // Bledne parametry
-      ZlibVersionError  = -5, // Zla wersja zliba
-      ZlibOtherError    = -6  // Jakis inny blad
+      Interupted        =  2, // interupted compresion
+      Ready             =  1, // ready
+      Success           =  0, // everything ok
+      ZlibDataError     = -1, // data problem
+      ZlibBufError      = -2, // too small buffer
+      ZlibMemError      = -3, // not enough memory
+      ZlibStreamError   = -4, // invalid arguments
+      ZlibVersionError  = -5, // invalid version 
+      ZlibOtherError    = -6  // other error
     };
  
-    /* Callback na odczytane dane */
+    /* Callback for reading data */
     struct Callback {
       /**
-       * @brief Funkcja do zdefiniowania w podklasach, funkcja dostaje w
-       * parametrach odczytane dane po kompresji/dekompresji.
+       * @brief you have to define this method in your class, 
        *
-       * @param buffer  dane po kompresji/dekompresji
-       * @param buflen  rozmiar tych danych
+       * @param buffer  data after compression/decompression
+       * @param buflen  size of data
        *
-       * @return true - kontunuuj kompresje/dekompresje,
-       *         false - przerwij kompresje/dekompresje
+       * @return true - continue, everything ok
+       *         false - break, some error occurs
        */
       virtual bool operator()(char *buffer, size_t buflen) = 0;
     };
 
-    /* Maksymalny liczba bajtow do odczytania na raz */
+    /* maximum count of bytes to read once */
     static const size_t MaxChunkSize = 16384;
 
     Zlib(void) : init_code(Success), ready(false) { }
     virtual ~Zlib(void) { }
 
     /**
-     * @brief Czy zainicjowano poprawnie dane
+     * @brief it's initialized?
      *
-     * @return Success, wpp blad
+     * @return success, otherwise error
      */
     virtual Code get_init_code(void) const { return init_code; }
 
     /**
-     * @brief Czy kompresja/dekompresja jest juz zakonczona
+     * @brief it's finished?
      *
      * @return true/false
      */
@@ -77,83 +76,85 @@ class Zlib {
     char chunk[MaxChunkSize];
     bool ready;
 
-    Zlib(const Zlib &); // uniemozliwiamy kopiowanie obiektu
+    Zlib(const Zlib &); // non-copyable
 };
 
-/* Do kompresji */
+/* to compress */
 class ZDeflate : public Zlib {
   public:
     ZDeflate(void);
     ~ZDeflate(void);
   
     /**
-     * @brief Skompresuj dane wejsciowe z funkcja callback
+     * @brief commpress input data with that callback function
      *
-     * @param input     dane do kompresji
-     * @param len       rozmiar tych danych
-     * @param callback  funkcja dostajaca juz skompresowane dane
-     * @param finish    true == konczymy kompresje, funkcja powinna wtedy
-     *                  zwrocic kod Ready
+     * @param input     data to compress
+     * @param len       size of that data
+     * @param callback  callback, gets commpresed chunks 
+     * @param finish    true == it's done, function should return Ready code
      *
-     * @param Success -ok, Ready -kompresja zakonczona, Interupted -w callback()
-     *        przerwano kompresje, wpp blad
+     * @param Success - everything ok (in progress), 
+     *        Ready - compression ended, 
+     *        Interupted - some callback() returns false,
+     *        otherwise error
      */
     Code perform(char *input, size_t len, Callback &callback, bool finish = false);
 
   protected:
 };
 
-/* Do dekompresji */
+/* to decompress */
 class ZInflate : public Zlib {
   public:
     ZInflate(void);
     ~ZInflate(void);
 
     /**
-     * @brief Zdekompresuj dane wejscione z funkcja callback
+     * @brief decompress input data with that callback function 
      *
-     * @param input     dane do dekompresowania
-     * @param len       rozmiar tych danych
-     * @param callback  funkcja dostajaca juz zdekompresowane dane
+     * @param input     data to decompress
+     * @param len       size of that data
+     * @param callback  callback, gets decompressed chunks
      *
-     * @param Success -ok, Ready -zdekompresowano, Interupted -w callback()
-     *        przerwano dekompresje, wpp blad
+     * @param Success - everything ok (in progress)
+     *        Ready - decompression ended, 
+     *        Interupted - some callback() returns false,
+     *        otherwise error
      */
     Code perform(char *input, size_t len, Callback &callback);
 
   protected:
 };
 
-/* do pobierania zdekompresowanej linni  */
+/* to get decompressed line */
 class ZGetlineCallback : public ZInflate::Callback {
   public:
     ZGetlineCallback(void) { }
 
     /**
-     * @brief Do zdefiniowana w podklasie, jako argument dostaje linie z
-     * zdekompresowanego wyjscia. Pomijane sa znaki '\0' i '\n', ich wystapinie
-     * w tekscie jest interpretowane jako koniec linni. 
+     * @brief you have to define this method in your class,
+     *        end of line is recognized by: '\0' and '\n',
+     *        will skipped in returned lines
      *
-     * @param line  linia
+     * @param line  decompressed line
      *
-     * @return true - kontutuuj, false - przerwij dekompresje
+     * @return true - continue, false - break
      */
     virtual bool operator()(const std::string &line) = 0;
 
     /**
-     * @brief Po zakonczonej kompresji moga jeszcze pozostac jakies dane do
-     * odczytania. Wywolanie flush() uruchomi this->operator()(current_line)
-     * jesli jakies dane istotnie pozostaly w pamieci.
+     * @brief after decompress is posible some data will not printed by 
+     *        callback function - when last line doesn't ended by newline -
+     *        if any data remained, flush() will call callback() with that
+     *        data
      *
-     * @return true/false - to co zwroci wywolane this->operator()(line) 
+     * @return true/false - just like operator()
      */
     virtual bool flush(void);
 
   private:
-    std::string current_line; // ostatnio wczytana linna
+    std::string current_line; // last read line
 
-    // do wewnetrznego uzytku, odpowiednio odczytuje dane wolajac
-    // this->operator(current_line) gdy zostanie wlasnie wczytana nowa linnia.
     virtual bool operator()(char *buffer, size_t buflen);
 };
 

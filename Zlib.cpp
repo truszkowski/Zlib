@@ -26,16 +26,16 @@ using namespace std;
 
 ZDeflate::ZDeflate(void) : Zlib()
 {
-  strm.zalloc = Z_NULL; // te pola musimy ustawic przed deflateInit2()
-  strm.zfree = Z_NULL;  // j.w.
-  strm.opaque = Z_NULL; // j.w.
+  strm.zalloc = Z_NULL; // need to set before deflateInit2()
+  strm.zfree = Z_NULL;  // --,,--
+  strm.opaque = Z_NULL; // --,,--
 
   int ret = deflateInit2(&strm, 
-      Z_DEFAULT_COMPRESSION, // = 6, mozna podawac z przedzialu 0-9
-      Z_DEFLATED,            // musi byc
-      15+16,                 // rozmiar okna do kompresji(= maks.) + gzip
-      8,                     // wielkosc danych trzymanych w pamieci: 1-9
-      Z_DEFAULT_STRATEGY);   // lub Z_HUFFMAN_ONLY, Z_FILTERED, Z_FIXED
+      Z_DEFAULT_COMPRESSION, // = 6, also 0-9
+      Z_DEFLATED,            // must be
+      15+16,                 // window size to decompress (= max) + gzip
+      8,                     // size of data in memory: 1-9
+      Z_DEFAULT_STRATEGY);   // or Z_HUFFMAN_ONLY, Z_FILTERED, Z_FIXED
 
   switch (ret) {
     case Z_OK:
@@ -69,7 +69,7 @@ ZDeflate::Code ZDeflate::perform(char *input, size_t len,
   strm.avail_in = len;
 
   do {
-    // Jesli brak danych do przerobienia to wychodzimy
+    // if no data to read, break 
     if (!finish && strm.avail_in == 0) break;
 
     strm.next_out = (Bytef*)chunk;
@@ -81,9 +81,9 @@ ZDeflate::Code ZDeflate::perform(char *input, size_t len,
 
     if (!callback(chunk, have)) return Interupted;
 
-    // Kontunuujemy dopoki wynikowy bufor jest pelny
+    // continue while output buffer is full
   } while (strm.avail_out == 0);
-  // ... bufor wejsciowy musi byc juz pusty
+  // ... input buffer must be empty
   assert(strm.avail_in == 0);
 
   return ready ? Ready:Success;
@@ -91,13 +91,13 @@ ZDeflate::Code ZDeflate::perform(char *input, size_t len,
 
 ZInflate::ZInflate(void) : Zlib()
 {
-  strm.zalloc = Z_NULL; // te pola musimy ustawic przed inflateInit2()
-  strm.zfree = Z_NULL;  // j.w.
-  strm.opaque = Z_NULL; // j.w.
-  strm.avail_in = 0;    // j.w.
-  strm.next_in = Z_NULL;// j.w.
+  strm.zalloc = Z_NULL; // need to set before inflateInit2()
+  strm.zfree = Z_NULL;  // --,,--
+  strm.opaque = Z_NULL; // --,,--
+  strm.avail_in = 0;    // --,,--
+  strm.next_in = Z_NULL;// --,,--
 
-  // rozmiar okna do dekompresji (= maks.) + rozpoznawanie czy gzip czy co...
+  // window size to decompress (= max) + detect gzip or ...
   int ret = inflateInit2(&strm, 15 + 32);
 
   switch (ret) {
@@ -133,7 +133,7 @@ ZInflate::Code ZInflate::perform(char *input, size_t len, ZInflate::Callback &ca
   strm.avail_in = len;
 
   do { 
-    // Jesli brak danych do przerobienia to wychodzimy
+    // if no data to read, break
     if (strm.avail_in == 0) break;
 
     strm.next_out = (Bytef*)chunk;
@@ -160,9 +160,9 @@ ZInflate::Code ZInflate::perform(char *input, size_t len, ZInflate::Callback &ca
     size_t have = MaxChunkSize - strm.avail_out;
     if (!callback(chunk, have)) return Interupted;
 
-    // Kontynuujemy dopoki wynikowy bufor jest pelny
-  } while (strm.avail_out == 0);
-  // ... bufor wejsciowy musi byc juz pusty
+    // continue while output buffer buffer is full 
+    } while (strm.avail_out == 0);
+  // ... input buffer must be empty
   assert(strm.avail_in == 0);
 
   return ready ? Ready:Success;
@@ -184,7 +184,7 @@ bool ZGetlineCallback::operator()(char *buffer, size_t buflen)
       buflen -= bufpos + 1;
       bufpos = 0;
 
-      // Przekazujemy, nawet jesli bedzie to pusta linnia
+      // even it's empty line
       bool ret = this->operator()(current_line);
       current_line = "";
 
@@ -192,7 +192,7 @@ bool ZGetlineCallback::operator()(char *buffer, size_t buflen)
     }
   }
 
-  // Jesli czegos nie przeczytalismy, odkladamy na pozniej
+  // if is something more to read, we will try later
   if (buflen > 0) 
     current_line.append(buffer, 0, buflen);
 

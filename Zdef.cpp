@@ -63,21 +63,21 @@ int main(void)
     int rd = read(0, buffer, MaxBufferSize);
     if (rd < 0) { 
       if (errno == EINTR || errno == EAGAIN) continue;
-      cerr << "Blad czytania z stdin: " << errno << ", " << strerror(errno) << endl;
+      cerr << "read error from stdin: " << errno << ", " << strerror(errno) << endl;
       return 1;
     }
 
     if (rd == 0) {
       Zlib::Code code = zdef.perform(buffer, rd, callback, true);
       if (code != Zlib::Ready) {
-        cerr << "Blad kompresji: " << code << endl;
+        cerr << "compress error: " << code << endl;
         return 1;
       }
       break;
     } else {
       Zlib::Code code = zdef.perform(buffer, rd, callback);
       if (code != Zlib::Success) {
-        cerr << "Blad kompresji: " << code << endl;
+        cerr << "compress error: " << code << endl;
         return 1;
       }    
     }

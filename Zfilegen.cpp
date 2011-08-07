@@ -29,7 +29,7 @@ using namespace std;
 int main(int argc, char **argv) 
 {
   if (argc != 3) {
-    cerr << "uzycie: " << argv[0] << " <nazwa-pliku> <wielkosc-pliku>" << endl;
+    cerr << "usage: " << argv[0] << " <filename> <filesize>" << endl;
     return 1;
   }
 
@@ -38,7 +38,7 @@ int main(int argc, char **argv)
 
   ofstream f(filename.c_str());
   if (!f.is_open()) {
-    cerr << "brak dostepu do pliku: " << filename << endl;
+    cerr << "no access to: " << filename << endl;
     return 1;
   }
 

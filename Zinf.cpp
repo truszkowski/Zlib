@@ -63,19 +63,19 @@ int main(void)
     if (rd == 0) break;
     if (rd < 0) { 
       if (errno == EINTR || errno == EAGAIN) continue;
-      cerr << "Blad czytania z stdin: " << errno << ", " << strerror(errno) << endl;
+      cerr << "read error from stdin: " << errno << ", " << strerror(errno) << endl;
       return 1;
     }
 
     Zlib::Code code = zinf.perform(buffer, rd, callback);
     if (code != Zlib::Success && code != Zlib::Ready) {
-      cerr << "Blad dekompresji: " << code << endl;
+      cerr << "decompression error: " << code << endl;
       return 1;
     }
   }
   
   if (!zinf.is_ready()) {
-    cerr << "Dekomresja nie kompletna" << endl;
+    cerr << "incomplete decomression" << endl;
     return 1;
   }
 
