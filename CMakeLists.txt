@@ -36,3 +36,8 @@ add_executable (Zfilegen Zfilegen.cpp)
 target_link_libraries (Zinf Zlib z)
 target_link_libraries (Zdef Zlib z)
 target_link_libraries (Zgetline Zlib z)
+
+enable_testing ()
+
+add_test (testZ ./testit)
+
