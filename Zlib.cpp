@@ -178,7 +178,7 @@ bool ZGetlineCallback::operator()(char *buffer, size_t buflen)
         buffer[bufpos] != '\n') ++bufpos;
     else {
       if (bufpos > 0) 
-        current_line.append(buffer, 0, bufpos);
+        current_line.append(buffer, buffer + bufpos);
 
       buffer += bufpos + 1;
       buflen -= bufpos + 1;
@@ -194,7 +194,7 @@ bool ZGetlineCallback::operator()(char *buffer, size_t buflen)
 
   // if is something more to read, we will try later
   if (buflen > 0) 
-    current_line.append(buffer, 0, buflen);
+    current_line.append(buffer, buffer + buflen);
 
   return true;
 }
