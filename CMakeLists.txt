@@ -16,14 +16,13 @@
 #
 # -----------------------------------------------------------------------------
 
-cmake_minimum_required (VERSION 2.6) 
-if (COMMAND cmake_policy)
-  cmake_policy (SET CMP0003 NEW)
-endif (COMMAND cmake_policy)
-
+cmake_minimum_required (VERSION 2.8) 
 project (Zlib)
 
 set (CMAKE_CXX_FLAGS "-ggdb3 -Wall -Wextra -Werror -O2")
+set (VERSION "0.2.0")
+
+include_directories (BEFORE ${CMAKE_SOURCE_DIR})
 
 add_library (Zlib Zlib.cpp)
 
@@ -38,6 +37,9 @@ target_link_libraries (Zdef Zlib z)
 target_link_libraries (Zgetline Zlib z)
 
 enable_testing ()
+add_test (testZ ${CMAKE_SOURCE_DIR}/testit)
 
-add_test (testZ ./testit)
-
+install (FILES Zlib.h DESTINATION include/)
+install (TARGETS Zlib DESTINATION lib/)
+install (TARGETS Zinf Zdef Zgetline DESTINATION bin/)
+include (CPack)
