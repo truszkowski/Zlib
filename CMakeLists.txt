@@ -17,11 +17,20 @@
 # -----------------------------------------------------------------------------
 
 cmake_minimum_required (VERSION 2.8) 
-project (Zlib)
+project (zlibpp)
 
-set (CMAKE_CXX_FLAGS "-ggdb3 -Wall -Wextra -Werror -O2")
-set (VERSION "0.2.0")
-
+if (DEFINED ENV{VIRTUAL_ENV})
+	message (STATUS "Detected active virtualenv: $ENV{VIRTUAL_ENV}")
+	include (venv/pkg)
+else ()
+	message (STATUS "Not detected active virtualenv")
+	set (CMAKE_CXX_FLAGS "-Wall -Wextra -g -pg -pipe -O2")
+	set (CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_CXX_FLAGS}")
+	set (CMAKE_VERBOSE_MAKEFILE   off)
+	set (CMAKE_COLOR_MAKEFILE     on)
+	set (CMAKE_USE_RELATIVE_PATHS on)
+endif ()
+	
 include_directories (BEFORE ${CMAKE_SOURCE_DIR})
 
 add_library (Zlib Zlib.cpp)
@@ -42,4 +51,7 @@ add_test (testZ ${CMAKE_SOURCE_DIR}/testit)
 install (FILES Zlib.h DESTINATION include/)
 install (TARGETS Zlib DESTINATION lib/)
 install (TARGETS Zinf Zdef Zgetline DESTINATION bin/)
-include (CPack)
+
+if (DEFINED ENV{VIRTUAL_ENV})
+	include (CPack)
+endif ()
